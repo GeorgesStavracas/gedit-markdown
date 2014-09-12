@@ -6,7 +6,7 @@ class MdSettings(GObject.Object):
         GObject.Object.__init__(self)
         
         self.ui = Gtk.Builder()
-        self.ui.add_from_file('/home/georges/.local/share/gedit/plugins/gedit-markdown/settings.ui')
+        self.ui.add_from_file('~/.local/share/gedit/plugins/gedit-markdown/settings.ui')
         
         # Dialog
         self.dialog = self.ui.get_object('settings_dialog')
