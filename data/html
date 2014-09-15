@@ -1,0 +1,10 @@
+<html>
+  <style>
+    %s
+  </style>
+  <body>
+    <div class="markdown-body">
+      %s
+    </div>
+  </body>
+</html>

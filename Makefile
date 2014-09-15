@@ -2,7 +2,7 @@ PLUGIN = markdown
 
 VERSION = 0.1.0
 
-OUTPUT_SOURCES = app.py __init__.py settings.py settings.ui win.py css/
+OUTPUT_SOURCES = app.py __init__.py settings.py settings.ui win.py css/ data/
 OUTPUT = markdown.plugin
 
 ICON_128_DIR = ~/.local/share/icons/hicolor/128x128/apps
@@ -17,13 +17,13 @@ markdown.plugin: markdown.plugin.m4 Makefile
 install:
 	@ [ `whoami` != "root" ] || ( echo 'Run make install as yourself, not as root.' ; exit 1 )
 	# make all directories
-	mkdir -p ~/.local/share/gedit/plugins/gedit-markdown
 	mkdir -p ~/.local/share/gedit/plugins
+	mkdir -p ~/.local/share/gedit/plugins/gedit-markdown
 	mkdir -p $(ICON_128_DIR)
 	mkdir -p $(ICON_48_DIR)
 	# copy needed files
-	cp -R $(OUTPUT_SOURCES) ~/.local/share/gedit/plugins/gedit-markdown
 	cp $(OUTPUT) ~/.local/share/gedit/plugins
+	cp -R $(OUTPUT_SOURCES) ~/.local/share/gedit/plugins/gedit-markdown
 	cp -p icons/gmarkdown-128.png $(ICON_128_DIR)/gmarkdown.png
 	cp -p icons/gmarkdown-48.png $(ICON_48_DIR)/gmarkdown.png
 
