@@ -7,41 +7,41 @@
       <mime-type>text/css</mime-type>
     </mime-types>
   </object>
-  <object class="GtkFileChooserDialog" id="filechooserdialog1">
+  <object class="GtkGrid" id="listbox_child">
+    <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="type_hint">dialog</property>
-    <property name="create_folders">False</property>
-    <property name="filter">filefilter1</property>
-    <child internal-child="vbox">
-      <object class="GtkBox" id="filechooserdialog-vbox1">
+    <property name="margin_left">12</property>
+    <property name="margin_right">12</property>
+    <property name="margin_top">5</property>
+    <property name="margin_bottom">5</property>
+    <property name="column_spacing">12</property>
+    <child>
+      <object class="GtkLabel" id="filename_label">
+        <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="filechooserdialog-action_area1">
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <placeholder/>
-        </child>
+        <property name="hexpand">True</property>
+        <property name="xalign">0</property>
+        <attributes>
+          <attribute name="font-desc" value="&lt;Inserir valor&gt; 8"/>
+          <attribute name="foreground" value="#88888a8a8585"/>
+        </attributes>
       </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">1</property>
+      </packing>
     </child>
-    <child type="titlebar">
-      <placeholder/>
+    <child>
+      <object class="GtkLabel" id="name_label">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="hexpand">True</property>
+        <property name="xalign">0</property>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">0</property>
+      </packing>
     </child>
   </object>
   <object class="GtkDialog" id="settings_dialog">
@@ -96,7 +96,8 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
+                <property name="top_attach">1</property>
+                <property name="width">2</property>
               </packing>
             </child>
             <child>
@@ -121,15 +122,29 @@
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
+                <property name="top_attach">2</property>
                 <property name="width">2</property>
               </packing>
             </child>
             <child>
-              <object class="GtkFileChooserButton" id="filechooserbutton1">
+              <object class="GtkLabel" id="label2">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="dialog">filechooserdialog1</property>
+                <property name="hexpand">True</property>
+                <property name="xalign">0</property>
+                <property name="label" translatable="yes">Automatically preview Markdown files</property>
+                <property name="ellipsize">end</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSwitch" id="auto_switch">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="halign">end</property>
               </object>
               <packing>
                 <property name="left_attach">1</property>
@@ -173,42 +188,6 @@
           </packing>
         </child>
       </object>
-    </child>
-  </object>
-  <object class="GtkBox" id="listbox_child">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="margin_left">12</property>
-    <property name="margin_right">12</property>
-    <property name="margin_top">12</property>
-    <property name="margin_bottom">12</property>
-    <property name="spacing">12</property>
-    <child>
-      <object class="GtkLabel" id="name_label">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="hexpand">True</property>
-        <property name="xalign">0</property>
-      </object>
-      <packing>
-        <property name="expand">False</property>
-        <property name="fill">True</property>
-        <property name="position">0</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkImage" id="selected_image">
-        <property name="width_request">24</property>
-        <property name="height_request">24</property>
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="icon_name">object-select-symbolic</property>
-      </object>
-      <packing>
-        <property name="expand">False</property>
-        <property name="fill">True</property>
-        <property name="position">1</property>
-      </packing>
     </child>
   </object>
 </interface>
