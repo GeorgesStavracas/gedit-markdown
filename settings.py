@@ -111,7 +111,7 @@ class MdSettings(GObject.Object):
         self.cancel_button.connect("clicked", self.on_dialog_button_clicked)
     
     def show_settings_window(self, parent):
-        self.dialog.set_transient_for(parent)
+        #self.dialog.set_transient_for(parent)
         self.dialog.run()
     
     def show_preview_window(self):

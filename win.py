@@ -1,5 +1,5 @@
 import markdown
-from gi.repository import GLib, GObject, Gio, Gtk, Gedit, WebKit
+from gi.repository import GLib, GObject, Gio, Gtk, Gedit, WebKit2
 from .settings import MdSettings, settings
 
 class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
@@ -11,7 +11,7 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
         self.window.connect("active-tab-changed", self.on_active_tab_changed)
         
         # Bottom panel WebView
-        self.webview = WebKit.WebView()
+        self.webview = WebKit2.WebView()
         
         self.scroll = Gtk.ScrolledWindow()
         self.scroll.add(self.webview)
@@ -26,6 +26,7 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
             settings = MdSettings()
 
         self.settings = settings
+        self.settings.connect("css-file-selected", self.on_css_selected)
 
         # Actions
         self.preview_action = Gio.SimpleAction.new("markdown_preview", None)
@@ -59,9 +60,15 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
     
     # Parse the active-tab document text
     def do_markdown(self, unused_a=None, unused_b=None):
+        bottom_panel = self.window.get_bottom_panel()
+        
         self.parse_markdown()
-        self.window.get_bottom_panel().show()
-        self.window.get_bottom_panel().set_visible_child(self.scroll)
+        
+        if bottom_panel.is_visible():
+            bottom_panel.set_visible(False)
+        else:
+            bottom_panel.show()
+            bottom_panel.set_visible_child(self.scroll)
     
     # Parse the current markdown file
     def parse_markdown(self, unused_a=None, unused_b=None):
@@ -71,7 +78,7 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
         css = settings.get_css()
         html_base = settings.get_html() % (css, html)
         
-        self.webview.load_html_string(html_base, "")
+        self.webview.load_html(html_base, None)
     
     # Enable/disable menu entries
     def update_status(self):
@@ -121,8 +128,12 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
             self.window.get_bottom_panel().hide()
             return
         
-        if settings.get_autopreview() is True:
+        if self.settings.get_autopreview() is True:
             self.parse_markdown()
-            
+    
+    # Change CSS automatically when it's selected        
+    def on_css_selected(self, unused_widget):
+        self.parse_markdown()
+    
     def on_preview_switch_changed(self, switch):
         pass
