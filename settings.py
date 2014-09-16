@@ -31,12 +31,19 @@ def is_css(f):
   return f.endswith(".css")
 
 def check_config_file():
-  if not os.path.exists(config_file()):
-    path = os.path.join(GLib.get_user_config_dir(), "gedit-markdown")
+  path = os.path.join(GLib.get_user_config_dir(), "gedit-markdown")
+  
+  if not os.path.exists(path):
     os.mkdir(path)
+    
+  if not os.path.exists(config_file()):
     # Create the config file when it doesn't exists
     file = open(config_file(), "w+")
     file.close()
+    
+    return False
+  
+  return True
 
 def get_stylesheet_title(css):
     f = open(css, "r")
@@ -64,6 +71,10 @@ class MdSettings(GObject.Object):
         self.listbox = self.ui.get_object('listbox')
         self.listbox.connect("row-activated", self.on_listbox_row_activated)
         
+        # Preview window
+        self.preview_window = self.ui.get_object('preview_window')
+        self.webview = self.ui.get_object('webview')
+        
         # CSS files
         self.css_files = [f for f in os.listdir(css_dir()) if is_css(os.path.join(css_dir(), f))]
         self.update_css_list()
@@ -72,22 +83,28 @@ class MdSettings(GObject.Object):
         self.save_button = self.ui.get_object('save_button')
         self.cancel_button = self.ui.get_object('cancel_button')
         
-        # Switch
+        # Switches
         self.auto_switch = self.ui.get_object('auto_switch')
+        self.preview_switch = self.ui.get_object('attached_switch')
         
         # Signals
         self.connect_signals()
         
         # Settings file
-        check_config_file()
+        file_exists = check_config_file()
         
         self.key_file = GLib.KeyFile()
         self.key_file.load_from_file(config_file(), GLib.KeyFileFlags.NONE)
         
-        # HTML file
-        
         # Update dialog preferences
-        self.auto_switch.set_active(self.key_file.get_boolean("Config", "AutoPreview"))
+        if file_exists:
+            self.auto_switch.set_active(self.key_file.get_boolean("Config", "AutoPreview"))
+            self.preview_switch.set_active(self.key_file.get_boolean("Config", "ShowPreviewWindow"))
+        else:
+            self.key_file.set_boolean("Config", "AutoPreview", False)
+            self.key_file.set_boolean("Config", "ShowPreviewWindow", False)
+            self.key_file.set_string("Config", "CSS", css_file("github.css"))
+            self.key_file.save_to_file(config_file())
     
     def connect_signals(self):
         self.save_button.connect("clicked", self.on_dialog_button_clicked)
@@ -97,10 +114,14 @@ class MdSettings(GObject.Object):
         self.dialog.set_transient_for(parent)
         self.dialog.run()
     
+    def show_preview_window(self):
+        self.preview_window.show()
+    
     def on_dialog_button_clicked(self, button):
         # Save config contents
         if button is self.save_button:
             self.key_file.set_boolean("Config", "AutoPreview", self.auto_switch.get_active())
+            self.key_file.set_boolean("Config", "ShowPreviewWindow", self.auto_switch.get_active())
             self.key_file.save_to_file(config_file())
         
         self.dialog.hide();
@@ -121,6 +142,17 @@ class MdSettings(GObject.Object):
         self.key_file.set_string("Config", "CSS", css_file(row.filename.get_text()))
         self.emit("css-file-selected")
     
+    # Get AutoPreview option
+    def get_autopreview(self):
+        return self.auto_switch.get_active()
+    
+    def get_show_preview_window(self):
+        return self.preview_switch.get_active()
+    
+    def get_window_webview(self):
+        return self.webview
+    
+    # Get base html content
     def get_html(self):
         f = open(html_file(), "r")
         html_content = f.read()
@@ -128,6 +160,7 @@ class MdSettings(GObject.Object):
         
         return html_content
     
+    # Get selected CSS content
     def get_css(self):
         css_f = self.key_file.get_string("Config", "CSS")
         
