@@ -1,6 +1,6 @@
 PLUGIN = markdown
 
-VERSION = 0.1.0
+VERSION = 0.2.0
 
 OUTPUT_SOURCES = app.py __init__.py settings.py settings.ui win.py css/ data/
 OUTPUT = markdown.plugin
