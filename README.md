@@ -36,7 +36,6 @@ Comments, ideas and (most of all) bug reports (and especially patches) are very 
 - [ ] Export as HTML
 
 ##TODO
-* Figure out why it sometimes have an absurd ammount of scroll
 * Remove python-markdown dependency (self containable)
 * Support Markdown extensions
 * Test it to the death	
