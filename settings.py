@@ -121,7 +121,7 @@ class MdSettings(GObject.Object):
         # Save config contents
         if button is self.save_button:
             self.key_file.set_boolean("Config", "AutoPreview", self.auto_switch.get_active())
-            self.key_file.set_boolean("Config", "ShowPreviewWindow", self.auto_switch.get_active())
+            self.key_file.set_boolean("Config", "ShowPreviewWindow", self.preview_switch.get_active())
             self.key_file.save_to_file(config_file())
         
         self.dialog.hide();
