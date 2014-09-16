@@ -1,8 +1,5 @@
 <html>
   <style>
-    html {
-      -webkit-font-smoothing: antialiased;
-    }
     %s
   </style>
   <body>
