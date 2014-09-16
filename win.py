@@ -11,15 +11,12 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
         self.window.connect("active-tab-changed", self.on_active_tab_changed)
         
         # Bottom panel WebView
-        self.webview = WebKit.WebView.new()
+        self.webview = WebKit.WebView()
         
-        viewport = Gtk.Viewport.new()
-        viewport.add(self.webview)
+        self.scroll = Gtk.ScrolledWindow()
+        self.scroll.add(self.webview)
         
-        self.scroll = Gtk.ScrolledWindow.new()
-        self.scroll.add(viewport)
         self.scroll.show_all()
-        
         self.window.get_bottom_panel().add_titled(self.scroll, "markdown_preview", _("Markdown"))
         
         # Settings
@@ -43,6 +40,11 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
         # Document monitor
         self.current_is_md = False
         self.current_document = None
+        
+        if settings.get_show_preview_window() is True:
+            self.current_webview = settings.get_window_webview()
+        else:
+            self.current_webview = self.webview
     
     def do_deactivate(self):
         self.window.remove_action("markdown_preview")
@@ -79,11 +81,19 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
         # Make sure there really is an active document opened
         if active_doc is None:
             self.preview_action.set_enabled(False)
+            self.window.get_bottom_panel().set_visible(False)
             return
         
         filename = active_doc.get_short_name_for_display()
         self.current_is_md = self.is_markdown_file(filename)
         self.preview_action.set_enabled(self.current_is_md)
+        
+        if settings.get_autopreview():
+            self.parse_markdown()
+            self.window.get_bottom_panel().set_visible(self.current_is_md)
+            
+            if self.current_is_md:
+                self.window.get_bottom_panel().set_visible_child(self.scroll)
         
         # Second, connect the signals
         if self.current_document is not None:
@@ -111,4 +121,8 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
             self.window.get_bottom_panel().hide()
             return
         
-        self.parse_markdown()
+        if settings.get_autopreview() is True:
+            self.parse_markdown()
+            
+    def on_preview_switch_changed(self, switch):
+        pass
