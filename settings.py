@@ -1,4 +1,4 @@
-from gi.repository import Gtk, GLib, GObject, Gio
+from gi.repository import Gtk, GLib, GObject, Gio, WebKit2
 import os
 
 # Single instance
@@ -54,7 +54,8 @@ def get_stylesheet_title(css):
 class MdSettings(GObject.Object):
     
     __gsignals__ = {
-        "css-file-selected": (GObject.SIGNAL_RUN_FIRST, None, ())
+        "css-file-selected": (GObject.SIGNAL_RUN_FIRST, None, ()),
+        "show-preview-window": (GObject.SIGNAL_RUN_FIRST, None, ())
     }
     
     def __init__(self):
@@ -73,7 +74,10 @@ class MdSettings(GObject.Object):
         
         # Preview window
         self.preview_window = self.ui.get_object('preview_window')
-        self.webview = self.ui.get_object('webview')
+        self.webview = WebKit2.WebView()
+        
+        self.ui.get_object('preview_scroll').add(self.webview)
+        self.webview.show()
         
         # CSS files
         self.css_files = [f for f in os.listdir(css_dir()) if is_css(os.path.join(css_dir(), f))]
@@ -109,9 +113,9 @@ class MdSettings(GObject.Object):
     def connect_signals(self):
         self.save_button.connect("clicked", self.on_dialog_button_clicked)
         self.cancel_button.connect("clicked", self.on_dialog_button_clicked)
+        self.preview_switch.connect("notify::active", self.on_preview_switch_activate)
     
     def show_settings_window(self, parent):
-        #self.dialog.set_transient_for(parent)
         self.dialog.run()
     
     def show_preview_window(self):
@@ -159,6 +163,9 @@ class MdSettings(GObject.Object):
         f.close()
         
         return html_content
+    
+    def on_preview_switch_activate(self, unused_switch, unused_data):
+        self.emit("show-preview-window")
     
     # Get selected CSS content
     def get_css(self):

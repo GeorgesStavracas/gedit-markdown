@@ -1,6 +1,7 @@
-import markdown
 from gi.repository import GLib, GObject, Gio, Gtk, Gedit, WebKit2
 from .settings import MdSettings, settings
+import markdown
+
 
 class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
     
@@ -10,15 +11,6 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
         # Window signal
         self.window.connect("active-tab-changed", self.on_active_tab_changed)
         
-        # Bottom panel WebView
-        self.webview = WebKit2.WebView()
-        
-        self.scroll = Gtk.ScrolledWindow()
-        self.scroll.add(self.webview)
-        
-        self.scroll.show_all()
-        self.window.get_bottom_panel().add_titled(self.scroll, "markdown_preview", _("Markdown"))
-        
         # Settings
         global settings
         
@@ -27,6 +19,16 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
 
         self.settings = settings
         self.settings.connect("css-file-selected", self.on_css_selected)
+        self.settings.connect("show-preview-window", self.on_show_preview_window)
+        
+        # Bottom panel WebView
+        self.webview = WebKit2.WebView()
+        
+        self.scroll = Gtk.ScrolledWindow()
+        self.scroll.add(self.webview)
+        
+        self.scroll.show_all()
+        self.window.get_bottom_panel().add_titled(self.scroll, "markdown_preview", _("Markdown"))
 
         # Actions
         self.preview_action = Gio.SimpleAction.new("markdown_preview", None)
@@ -78,7 +80,7 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
         css = settings.get_css()
         html_base = settings.get_html() % (css, html)
         
-        self.webview.load_html(html_base, None)
+        self.current_webview.load_html(html_base, None)
     
     # Enable/disable menu entries
     def update_status(self):
@@ -88,7 +90,7 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
         # Make sure there really is an active document opened
         if active_doc is None:
             self.preview_action.set_enabled(False)
-            self.window.get_bottom_panel().set_visible(False)
+            self.toggle_previewer(False)
             return
         
         filename = active_doc.get_short_name_for_display()
@@ -97,9 +99,9 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
         
         if settings.get_autopreview():
             self.parse_markdown()
-            self.window.get_bottom_panel().set_visible(self.current_is_md)
+            self.toggle_previewer(self.current_is_md)
             
-            if self.current_is_md:
+            if self.current_is_md and not self.settings.get_show_preview_window():
                 self.window.get_bottom_panel().set_visible_child(self.scroll)
         
         # Second, connect the signals
@@ -111,13 +113,39 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
             self.connection_id = -1
         
         if self.current_is_md:
-                self.current_document = active_doc
-                self.connection_id = active_doc.connect ("changed", self.on_text_changed)
+              self.current_document = active_doc
+              self.connection_id = active_doc.connect ("changed", self.on_text_changed)
+        
+    # Toggle the preview window, or set a given visibility
+    def toggle_previewer(self, show=None):
+        widget = None
+        
+        if self.settings.get_show_preview_window():
+            widget = self.settings.preview_window
+        else:
+            widget = self.window.get_bottom_panel()
+        
+        if show is None:
+            widget.set_visible(not widget.get_visible())
+        else:
+            widget.set_visible(show)
+        
     
     # Check if it's a Markdown file
     def is_markdown_file(self, filename):
       return filename.endswith(".md")
       
+    def should_preview(self):
+        active_doc = self.window.get_active_document()
+        
+        if active_doc is None:
+            return False
+        
+        filename = active_doc.get_short_name_for_display()
+        
+        return self.is_markdown_file(filename)
+        
+    
     def do_show_settings(self, unused_a, unused_b):
         self.settings.show_settings_window(self.window)
     
@@ -135,5 +163,16 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
     def on_css_selected(self, unused_widget):
         self.parse_markdown()
     
-    def on_preview_switch_changed(self, switch):
-        pass
+    def on_show_preview_window(self, unused_widget):
+        if self.settings.get_show_preview_window():
+            self.current_webview = self.settings.get_window_webview()
+            self.window.get_bottom_panel().set_visible(False)
+            self.settings.preview_window.set_visible(self.should_preview())
+            self.settings.preview_window.present()
+        else:
+            self.current_webview = self.webview
+            self.settings.preview_window.set_visible(False)
+            self.window.get_bottom_panel().set_visible(self.should_preview())
+        
+        self.update_status()
+        
