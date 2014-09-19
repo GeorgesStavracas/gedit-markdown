@@ -56,6 +56,7 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
         self.window.get_bottom_panel().remove(self.webview)
     
     def do_update_state(self):
+        # We don't want to show it every single time an event is fired
         if self.window.get_property("state") not in self.ignored_states:
             self.update_status()
     
@@ -79,13 +80,14 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
             return
         
         text = doc.get_property("text")
-        html = markdown.markdown(text)
+        base_html = markdown.markdown(text)
         margin = settings.margin.get_value_as_int()
+        base_uri = "file://"+doc.get_location().get_parent().get_path()
         
         css = settings.get_css()
-        html_base = settings.get_html() % (margin, css, html)
+        html = settings.get_html() % (margin, css, base_html)
         
-        self.webview.load_html(html_base, None)
+        self.webview.load_html(html, base_uri)
     
     # Enable/disable menu entries
     def update_status(self):
