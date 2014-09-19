@@ -55,7 +55,8 @@ class MdSettings(GObject.Object):
     
     __gsignals__ = {
         "css-file-selected": (GObject.SIGNAL_RUN_FIRST, None, ()),
-        "show-preview-window": (GObject.SIGNAL_RUN_FIRST, None, ())
+        "show-preview-window": (GObject.SIGNAL_RUN_FIRST, None, ()),
+        "margin-changed": (GObject.SIGNAL_RUN_FIRST, None, ())
     }
     
     def __init__(self):
@@ -74,14 +75,15 @@ class MdSettings(GObject.Object):
         
         # Preview window
         self.preview_window = self.ui.get_object('preview_window')
-        self.webview = WebKit2.WebView()
         
-        self.ui.get_object('preview_scroll').add(self.webview)
-        self.webview.show()
+        self.preview_window_scroll = self.ui.get_object('preview_scroll')
         
         # CSS files
         self.css_files = [f for f in os.listdir(css_dir()) if is_css(os.path.join(css_dir(), f))]
         self.update_css_list()
+        
+        # Spin
+        self.margin = self.ui.get_object('margin_spin')
         
         # Buttons
         self.save_button = self.ui.get_object('save_button')
@@ -104,9 +106,11 @@ class MdSettings(GObject.Object):
         if file_exists:
             self.auto_switch.set_active(self.key_file.get_boolean("Config", "AutoPreview"))
             self.preview_switch.set_active(self.key_file.get_boolean("Config", "ShowPreviewWindow"))
+            self.margin.set_value(self.key_file.get_integer("Config", "Margin"))
         else:
             self.key_file.set_boolean("Config", "AutoPreview", False)
             self.key_file.set_boolean("Config", "ShowPreviewWindow", False)
+            self.key_file.set_integer("Config", "Margin", self.margin.get_value_as_int())
             self.key_file.set_string("Config", "CSS", css_file("github.css"))
             self.key_file.save_to_file(config_file())
     
@@ -114,6 +118,7 @@ class MdSettings(GObject.Object):
         self.save_button.connect("clicked", self.on_dialog_button_clicked)
         self.cancel_button.connect("clicked", self.on_dialog_button_clicked)
         self.preview_switch.connect("notify::active", self.on_preview_switch_activate)
+        self.margin.connect("changed", self.on_margin_changed)
     
     def show_settings_window(self, parent):
         self.dialog.run()
@@ -126,6 +131,7 @@ class MdSettings(GObject.Object):
         if button is self.save_button:
             self.key_file.set_boolean("Config", "AutoPreview", self.auto_switch.get_active())
             self.key_file.set_boolean("Config", "ShowPreviewWindow", self.preview_switch.get_active())
+            self.key_file.set_integer("Config", "Margin", self.margin.get_value_as_int())
             self.key_file.save_to_file(config_file())
         
         self.dialog.hide();
@@ -166,6 +172,9 @@ class MdSettings(GObject.Object):
     
     def on_preview_switch_activate(self, unused_switch, unused_data):
         self.emit("show-preview-window")
+    
+    def on_margin_changed(self, unused_switch):
+        self.emit("margin-changed")
     
     # Get selected CSS content
     def get_css(self):

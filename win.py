@@ -7,6 +7,13 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
     
     window = GObject.property(type=Gedit.Window)
     
+    ignored_states = {
+        0,
+        Gedit.WindowState.ERROR,
+        Gedit.WindowState.PRINTING,
+        Gedit.WindowState.SAVING
+    }
+    
     def do_activate(self):
         # Window signal
         self.window.connect("active-tab-changed", self.on_active_tab_changed)
@@ -19,17 +26,15 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
 
         self.settings = settings
         self.settings.connect("css-file-selected", self.on_css_selected)
-        self.settings.connect("show-preview-window", self.on_show_preview_window)
+        self.settings.connect("margin-changed", self.on_margin_changed)
+        #self.settings.connect("show-preview-window", self.on_show_preview_window)
         
-        # Bottom panel WebView
+        # Bottom panel WebView2
         self.webview = WebKit2.WebView()
+        self.webview.show()
         
-        self.scroll = Gtk.ScrolledWindow()
-        self.scroll.add(self.webview)
+        self.window.get_bottom_panel().add_titled(self.webview, "markdown_preview", _("Markdown"))
         
-        self.scroll.show_all()
-        self.window.get_bottom_panel().add_titled(self.scroll, "markdown_preview", _("Markdown"))
-
         # Actions
         self.preview_action = Gio.SimpleAction.new("markdown_preview", None)
         self.preview_action.connect("activate", self.do_markdown)
@@ -44,47 +49,47 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
         self.current_is_md = False
         self.current_document = None
         
-        if settings.get_show_preview_window() is True:
-            self.current_webview = settings.get_window_webview()
-        else:
-            self.current_webview = self.webview
     
     def do_deactivate(self):
         self.window.remove_action("markdown_preview")
         self.window.remove_action("markdown_settings")
-        self.window.get_bottom_panel().remove(self.scroll)
+        self.window.get_bottom_panel().remove(self.webview)
     
     def do_update_state(self):
-        self.update_status()
+        if self.window.get_property("state") not in self.ignored_states:
+            self.update_status()
     
     def on_active_tab_changed(self, unused_window, tab):
         self.update_status()
     
     # Parse the active-tab document text
     def do_markdown(self, unused_a=None, unused_b=None):
-        bottom_panel = self.window.get_bottom_panel()
-        
         self.parse_markdown()
+        self.toggle_previewer()
         
-        if bottom_panel.is_visible():
-            bottom_panel.set_visible(False)
-        else:
-            bottom_panel.show()
-            bottom_panel.set_visible_child(self.scroll)
     
     # Parse the current markdown file
     def parse_markdown(self, unused_a=None, unused_b=None):
-        text = self.window.get_active_document().get_property("text")
+        doc = self.window.get_active_document()
+        
+        if doc is None:
+            return
+        
+        if not self.is_markdown_file(doc.get_short_name_for_display()):
+            return
+        
+        text = doc.get_property("text")
         html = markdown.markdown(text)
+        margin = settings.margin.get_value_as_int()
         
         css = settings.get_css()
-        html_base = settings.get_html() % (css, html)
+        html_base = settings.get_html() % (margin, css, html)
         
-        self.current_webview.load_html(html_base, None)
+        self.webview.load_html(html_base, None)
     
     # Enable/disable menu entries
     def update_status(self):
-        # First, update the Gear menu entries
+        # Update the Gear menu entries
         active_doc = self.window.get_active_document()
         
         # Make sure there really is an active document opened
@@ -102,9 +107,15 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
             self.toggle_previewer(self.current_is_md)
             
             if self.current_is_md and not self.settings.get_show_preview_window():
-                self.window.get_bottom_panel().set_visible_child(self.scroll)
+                self.window.get_bottom_panel().set_visible_child(self.webview)
         
-        # Second, connect the signals
+        # Update connection
+        self.update_document_connection()
+        
+    # Connect Gtk.TextBuffer::changed signal
+    def update_document_connection(self):
+        active_doc = self.window.get_active_document()
+        
         if self.current_document is not None:
             
             if self.connection_id >= 0:
@@ -115,7 +126,7 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
         if self.current_is_md:
               self.current_document = active_doc
               self.connection_id = active_doc.connect ("changed", self.on_text_changed)
-        
+    
     # Toggle the preview window, or set a given visibility
     def toggle_previewer(self, show=None):
         widget = None
@@ -163,14 +174,21 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
     def on_css_selected(self, unused_widget):
         self.parse_markdown()
     
+    def on_margin_changed(self, unused_data):
+        self.parse_markdown()
+    
     def on_show_preview_window(self, unused_widget):
+        # Remove from the current container
+        self.webview.get_parent().remove(self.webview)
+        
         if self.settings.get_show_preview_window():
-            self.current_webview = self.settings.get_window_webview()
             self.window.get_bottom_panel().set_visible(False)
+            
+            self.settings.preview_window_scroll.add(self.webview)
             self.settings.preview_window.set_visible(self.should_preview())
             self.settings.preview_window.present()
+            
         else:
-            self.current_webview = self.webview
             self.settings.preview_window.set_visible(False)
             self.window.get_bottom_panel().set_visible(self.should_preview())
         

@@ -1,5 +1,8 @@
 <html>
   <style>
+    html {
+      margin: %dpx;
+    }
     %s
   </style>
   <body>
