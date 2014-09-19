@@ -9,6 +9,7 @@ class MdAppActivatable(GObject.Object, Gedit.AppActivatable):
     
     def do_activate(self):
         self.app.add_accelerator("<Primary><Shift>M", "win.markdown_preview", None)
+        self.app.add_accelerator("<Primary><Alt>M", "win.markdown_settings", None)
         
         self.menu_extension = self.extend_menu("tools-section")
         item = Gio.MenuItem.new(_("Markdown"), None)
