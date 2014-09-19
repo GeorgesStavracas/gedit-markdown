@@ -1,11 +1,22 @@
 # Markdown plugin for Gedit
 
-gedit-markdown is a simple gedit plugin written in python.
+*gedit-markdown* is a simple gedit plugin written in python.
 
-#### Current Features
+![Screenshot](data/screenshot.png)
+
+**Current Features**:
+
 * As-you-type Markdown preview
 * Custom CSS support
+* Built-in & Separated window views (highly unstable - disabled by now)
 
+## Usage
+
+Using *gedit-markdown* is easy: open a .md file and preview it.
+
+You can use the keyboard shortcut:
+
+    <Primary><Shift> M
 
 ## Installation
 
@@ -33,6 +44,7 @@ Comments, ideas and (most of all) bug reports (and especially patches) are very 
 - [x] Preview Markdown files
 - [x] As-you-type preview
 - [x] Support custom CSS
+- [ ] Markdown extensions
 - [ ] Export as HTML
 
 ##TODO
