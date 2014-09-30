@@ -1,7 +1,7 @@
 from gi.repository import GLib, GObject, Gio, Gtk, Gedit, WebKit2
 from .settings import MdSettings, settings
+from .parser import MdParser
 import markdown
-
 
 class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
     
@@ -29,11 +29,11 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
         self.settings.connect("margin-changed", self.on_margin_changed)
         #self.settings.connect("show-preview-window", self.on_show_preview_window)
         
-        # Bottom panel WebView2
-        self.webview = WebKit2.WebView()
-        self.webview.show()
+        # Parser
+        self.parser = MdParser()
+        self.parser.webview.show()
         
-        self.window.get_bottom_panel().add_titled(self.webview, "markdown_preview", _("Markdown"))
+        self.window.get_bottom_panel().add_titled(self.parser.webview, "markdown_preview", _("Markdown"))
         
         # Actions
         self.preview_action = Gio.SimpleAction.new("markdown_preview", None)
@@ -53,7 +53,7 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
     def do_deactivate(self):
         self.window.remove_action("markdown_preview")
         self.window.remove_action("markdown_settings")
-        self.window.get_bottom_panel().remove(self.webview)
+        self.window.get_bottom_panel().remove(self.parser.webview)
     
     def do_update_state(self):
         # We don't want to show it every single time an event is fired
@@ -79,15 +79,9 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
         if not self.is_markdown_file(doc.get_short_name_for_display()):
             return
         
-        text = doc.get_property("text")
-        base_html = markdown.markdown(text)
         margin = settings.margin.get_value_as_int()
-        base_uri = "file://"+doc.get_location().get_parent().get_path()
         
-        css = settings.get_css()
-        html = settings.get_html() % (margin, css, base_html)
-        
-        self.webview.load_html(html, base_uri)
+        self.parser.parse(doc.get_property("text"), settings.get_css(), settings.get_html(), margin)
     
     # Enable/disable menu entries
     def update_status(self):
@@ -109,7 +103,7 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
             self.toggle_previewer(self.current_is_md)
             
             if self.current_is_md and not self.settings.get_show_preview_window():
-                self.window.get_bottom_panel().set_visible_child(self.webview)
+                self.window.get_bottom_panel().set_visible_child(self.parser.webview)
         
         # Update connection
         self.update_document_connection()
@@ -181,12 +175,12 @@ class MdWinActivatable(GObject.Object, Gedit.WindowActivatable):
     
     def on_show_preview_window(self, unused_widget):
         # Remove from the current container
-        self.webview.get_parent().remove(self.webview)
+        self.parser.webview.get_parent().remove(self.parser.webview)
         
         if self.settings.get_show_preview_window():
             self.window.get_bottom_panel().set_visible(False)
             
-            self.settings.preview_window_scroll.add(self.webview)
+            self.settings.preview_window_scroll.add(self.parser.webview)
             self.settings.preview_window.set_visible(self.should_preview())
             self.settings.preview_window.present()
             

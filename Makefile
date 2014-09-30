@@ -2,7 +2,7 @@ PLUGIN = markdown
 
 VERSION = 0.2.0
 
-OUTPUT_SOURCES = app.py __init__.py settings.py settings.ui win.py css/ data/
+OUTPUT_SOURCES = app.py __init__.py parser.py settings.py settings.ui win.py css/ data/
 OUTPUT = markdown.plugin
 
 ICON_128_DIR = ~/.local/share/icons/hicolor/128x128/apps

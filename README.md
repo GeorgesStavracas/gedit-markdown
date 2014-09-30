@@ -14,7 +14,11 @@
 
 Using *gedit-markdown* is easy: open a .md file and preview it.
 
-You can use the keyboard shortcut:
+A menu entry is found at 
+
+    [Gear menu] > Markdown > Preview Markdown files
+
+Alternativelly, you can use the keyboard shortcut:
 
     <Primary><Shift> M
 
